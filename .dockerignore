@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+!.env.example
+data/
+**/__pycache__
+**/*.pyc
+**/*.egg-info
+**/.venv
+**/.pytest_cache
+frontend/node_modules
+frontend/dist
+backend/static
+*.swp
+*.md
+!README.md

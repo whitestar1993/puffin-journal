@@ -1,0 +1,27 @@
+# secrets & data
+.env
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+backend/static/
+
+# node
+node_modules/
+frontend/dist/
+
+# editors / OS
+*.swp
+*.swo
+*~
+.DS_Store
+.idea/
+.vscode/
