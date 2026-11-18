@@ -1,6 +1,7 @@
 """Single-user auth: argon2 hash from env, signed session cookie, login rate limit."""
 
 import hashlib
+import hmac
 import threading
 import time
 from collections import defaultdict, deque
@@ -32,8 +33,11 @@ def verify_password(password_hash: str, password: str) -> bool:
 
 
 def _password_fingerprint(settings: Settings) -> str:
-    # Changing APP_PASSWORD_HASH (or SECRET_KEY) invalidates every existing session.
-    return hashlib.sha256(settings.app_password_hash.encode()).hexdigest()[:16]
+    # Changing the password (or SECRET_KEY) invalidates every existing session.
+    # Keyed with the secret because the cookie payload is readable. Uses the
+    # plain password when given, since its in-memory hash changes every restart.
+    credential = settings.app_password or settings.app_password_hash
+    return hmac.new(settings.secret_key.encode(), credential.encode(), hashlib.sha256).hexdigest()[:16]
 
 
 def _serializer(settings: Settings) -> URLSafeTimedSerializer:

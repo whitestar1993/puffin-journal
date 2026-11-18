@@ -12,8 +12,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=None, extra="ignore")
 
     app_username: str = "me"
-    # argon2 hash produced by `python -m app.cli hash-password`
+    # Either a plain password (hashed in memory at startup) ...
+    app_password: str = ""
+    # ... or an argon2 hash from `python -m app.cli hash-password` (wins if both set).
     app_password_hash: str = ""
+    # Optional; auto-generated into DATA_DIR/secret_key when empty.
     secret_key: str = ""
 
     tz: str = Field(default="UTC", alias="TZ")

@@ -120,19 +120,3 @@ def test_today_uses_configured_timezone():
     assert str(today(ZoneInfo("Europe/Berlin"), now)) == "2026-11-18"
     assert str(today(ZoneInfo("America/New_York"), now)) == "2026-11-17"
 
-
-def test_startup_rejects_placeholder_config(settings):
-    import pytest
-
-    from app.main import _check_settings
-
-    bad = settings.model_copy(
-        update={
-            "secret_key": "change-me-to-a-long-random-string",
-            "app_password_hash": "$argon2id$v=19$m=65536,t=3,p=4$REPLACE_ME",
-        }
-    )
-    with pytest.raises(RuntimeError) as exc:
-        _check_settings(bad)
-    assert "SECRET_KEY" in str(exc.value) and "APP_PASSWORD_HASH" in str(exc.value)
-    _check_settings(settings)  # the real test config is accepted

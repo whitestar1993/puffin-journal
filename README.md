@@ -27,23 +27,12 @@ trackers, no CDN calls. One user, behind a login.
 ```bash
 git clone <your-repo-url> puffin-journal
 cd puffin-journal
-cp .env.example .env
+cp env.example .env
 mkdir data
 ```
 
-Generate a password hash and secret key, then paste them into `.env`
-(keep the single quotes around the hash):
-
-```bash
-docker compose run --rm app python -m app.cli hash-password
-```
-
-```bash
-docker compose run --rm app python -m app.cli secret-key
-```
-
-Set `TZ` to your timezone. If you'll use plain `http://` (no TLS), set
-`COOKIE_SECURE=false`. Then:
+Edit `.env`: set `APP_PASSWORD` and `TZ`. If you'll use plain `http://`
+(no TLS), also set `COOKIE_SECURE=false`. Then:
 
 ```bash
 docker compose up -d
@@ -53,13 +42,14 @@ Open `http://<host>:8000` and log in.
 
 ## Configuration
 
-All settings live in `.env` (see `.env.example` for comments).
+All settings live in `.env` (see `env.example` for comments). `.env` is gitignored.
 
 | Variable | Default | Description |
 |---|---|---|
 | `APP_USERNAME` | `me` | Login username |
-| `APP_PASSWORD_HASH` | — (required) | argon2 hash from `python -m app.cli hash-password`; wrap in single quotes |
-| `SECRET_KEY` | — (required) | ≥32 random chars; signs session cookies. Changing it logs everyone out |
+| `APP_PASSWORD` | — (required) | Login password, ≥8 characters. Hashed in memory at startup |
+| `APP_PASSWORD_HASH` | — | Optional instead of `APP_PASSWORD`: argon2 hash from `python -m app.cli hash-password`, in single quotes. Wins if both are set |
+| `SECRET_KEY` | auto | Signs session cookies. Leave empty to auto-generate into `./data/secret_key` |
 | `TZ` | `UTC` | IANA timezone; decides what "today" is |
 | `PORT` | `8000` | Host port |
 | `COOKIE_SECURE` | `true` | Cookie only sent over HTTPS. Set `false` for plain-HTTP LAN use |
@@ -69,8 +59,10 @@ All settings live in `.env` (see `.env.example` for comments).
 | `NTFY_URL` / `NTFY_TOPIC` | — | Reminders via ntfy (Phase 4, not used yet) |
 | `REMINDER_TIME` | `20:30` | Reminder time, local (Phase 4, not used yet) |
 
-The app refuses to start if `SECRET_KEY` or `APP_PASSWORD_HASH` is missing or invalid.
-Changing the password hash invalidates all existing sessions.
+The app refuses to start if no password is set, or if a value is still the
+example placeholder. Changing the password or secret logs out every session.
+`./data/secret_key` is part of your data: back it up with the database (if
+it's lost, a new one is generated and you just log in again).
 
 ## Backup and restore
 

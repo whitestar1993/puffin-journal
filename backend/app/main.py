@@ -4,7 +4,6 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from argon2 import extract_parameters
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.api import auth as auth_api
 from app.api import entries as entries_api
 from app.api import settings as settings_api
+from app import credentials
 from app.auth import LoginRateLimiter
 from app.config import Settings, get_settings
 from app.db import get_engine
@@ -26,30 +26,20 @@ SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 CSRF_HEADER = "x-puffin"
 
 
-def _check_settings(settings: Settings) -> None:
-    problems = []
-    if len(settings.secret_key) < 32 or "change-me" in settings.secret_key:
-        problems.append("SECRET_KEY must be set to a random value of at least 32 characters")
-    try:
-        extract_parameters(settings.app_password_hash)
-    except Exception:
-        problems.append("APP_PASSWORD_HASH must be an argon2 hash (python -m app.cli hash-password)")
-    if problems:
-        raise RuntimeError("; ".join(problems))
-
-
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
-        _check_settings(settings)
+        credentials.resolve(settings)
         with Session(get_engine()) as db:
             users_store.get_or_create(db, settings.app_username)
         log.info("Puffin Journal ready (TZ=%s)", settings.tz)
         yield
 
     app = FastAPI(title="Puffin Journal", lifespan=lifespan, docs_url=None, redoc_url=None)
+    # Routes depend on get_settings(); make them see the same (resolved) object.
+    app.dependency_overrides[get_settings] = lambda: settings
     app.state.login_limiter = LoginRateLimiter(
         settings.login_max_failures, settings.login_window_seconds
     )

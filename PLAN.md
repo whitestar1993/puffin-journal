@@ -8,17 +8,17 @@ changed direction. The full original brief is in [SPEC.md](SPEC.md).
 - [x] FastAPI backend, SQLAlchemy 2.0, SQLite on `/data`, Alembic migration `0001_initial`
 - [x] Schema with `users` table and `user_id` on every data table; all storage functions scoped by user
 - [x] Storage layer isolated in `backend/app/storage/` (only place that touches the DB)
-- [x] Auth: argon2 hash in env, signed HttpOnly session cookie (30 days), per-IP login rate limit, CSRF header guard, sessions invalidated when the password hash or secret changes
+- [x] Auth: plain `APP_PASSWORD` (hashed in memory) or argon2 `APP_PASSWORD_HASH`; `SECRET_KEY` auto-generated into `/data/secret_key` if unset; signed HttpOnly session cookie (30 days), per-IP login rate limit, CSRF header guard, sessions invalidated when the password or secret changes
 - [x] Check-in screen: mood (emoji), energy, sleep (optional), tag chips (most-used first, inline add), daily rotating prompt with quick-answer chips and one-tap skip, optional note, single Save
 - [x] Backfill / edit any past day (‹ › arrows, date picker; future dates rejected); delete an entry
 - [x] History list: newest first, text search (note / prompt answer), multi-tag filter (AND), paging
 - [x] Settings: add / rename / remove (archive if used) / restore tags; add / edit / toggle / delete prompts and quick answers; logout
 - [x] "Today" computed in configured `TZ`
 - [x] Security headers (strict CSP, no-store on API, frame deny); no third-party requests; access log off by default
-- [x] Tests: storage layer, prompt rotation, timezone, auth/rate limit, API flows, startup config check (45 tests)
+- [x] Tests: storage layer, prompt rotation, timezone, auth/rate limit, API flows, startup config check, credential handling (48 tests)
 - [x] Multi-stage Dockerfile (node build → venv → slim runtime), non-root, healthcheck, optional `test` target
 - [x] docker-compose (read-only rootfs, cap_drop ALL, volume, env_file, restart, healthcheck, TZ)
-- [x] README, CLAUDE.md, .env.example, .gitignore, .dockerignore
+- [x] README, CLAUDE.md, env.example, .gitignore, .dockerignore
 
 ## Phase 2 — Views
 

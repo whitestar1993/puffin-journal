@@ -37,7 +37,8 @@ backend/
     storage/       THE ONLY MODULE THAT TOUCHES THE DB (entries, tags, prompts, users)
     api/           thin routers: auth.py, entries.py (today/days/entries), settings.py (tags/prompts)
     timeutil.py    today() in configured TZ
-    cli.py         hash-password, secret-key
+    credentials.py startup: plain APP_PASSWORD → in-memory hash; SECRET_KEY auto-generated to DATA_DIR/secret_key
+    cli.py         hash-password, secret-key (optional helpers)
   alembic/versions/  migrations
   tests/           pytest (storage, API, rotation, TZ)
 frontend/          Svelte 5 + Vite + TS, no SvelteKit
@@ -50,7 +51,7 @@ Dockerfile             frontend → backend-build → (test) → runtime
 
 ## Data model
 
-- `users(id, username, created_at)` — one row, created from `APP_USERNAME` at startup with default tags/prompts. Password hash lives in env, not the DB.
+- `users(id, username, created_at)` — one row, created from `APP_USERNAME` at startup with default tags/prompts. The password lives in env (`APP_PASSWORD` or `APP_PASSWORD_HASH`), not the DB.
 - `entries(id, user_id, date, mood 1-5, energy 1-5?, sleep 1-5?, prompt_id?, prompt_text?, prompt_answer?, note?, created_at, updated_at)` — unique `(user_id, date)`. Only mood is required.
   - `prompt_text` is a snapshot taken when the prompt is first answered; editing/deleting the prompt never rewrites history. A skipped prompt stores nothing.
 - `tags(id, user_id, name, archived)` — unique `(user_id, name)`, names lowercased. Deleting a used tag archives it.
@@ -78,7 +79,7 @@ docker build --target test .
 # Or locally, if you have python3-venv:
 cd backend && python3 -m venv .venv && .venv/bin/pip install -e '.[dev]' && .venv/bin/pytest
 
-# Backend dev server: reuse ../.env (set COOKIE_SECURE=false in it for http://localhost)
+# Backend dev server: reuse ../.env (APP_PASSWORD set, COOKIE_SECURE=false for http://localhost)
 cd backend && mkdir -p ../data && set -a && . ../.env && set +a && export DATA_DIR=../data \
   && .venv/bin/alembic upgrade head && .venv/bin/uvicorn app.main:app --reload
 
