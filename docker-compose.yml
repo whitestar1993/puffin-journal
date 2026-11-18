@@ -39,4 +39,5 @@ services:
 # - Set FORWARDED_ALLOW_IPS in .env to the proxy's IP (e.g. the Docker network
 #   gateway, or "*" if only the proxy can reach the container) so the login rate
 #   limit sees real client IPs instead of the proxy's.
-# - Keep COOKIE_SECURE=true whenever the site is served over HTTPS.
+# - COOKIE_SECURE=auto (default) marks the cookie HTTPS-only once the proxy is
+#   trusted via FORWARDED_ALLOW_IPS; set it to true to enforce HTTPS-only.

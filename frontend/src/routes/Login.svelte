@@ -13,7 +13,6 @@
     error = "";
     try {
       await api.login(username, password);
-      onlogin();
     } catch (err) {
       error =
         err instanceof ApiError && err.status === 429
@@ -21,6 +20,20 @@
           : err instanceof ApiError && err.status === 401
             ? "That didn't match."
             : "Couldn't reach the server.";
+      busy = false;
+      return;
+    }
+    // The password was right; check the browser actually kept the session cookie.
+    try {
+      await api.me();
+      onlogin();
+    } catch {
+      error =
+        location.protocol === "http:"
+          ? "Password accepted, but your browser rejected the session cookie because this page " +
+            "isn't HTTPS. Set COOKIE_SECURE=auto in .env and restart the container."
+          : "Password accepted, but your browser didn't keep the session cookie. " +
+            "Check that cookies are allowed for this site.";
     } finally {
       busy = false;
     }

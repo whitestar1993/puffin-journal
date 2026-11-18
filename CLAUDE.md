@@ -79,7 +79,7 @@ docker build --target test .
 # Or locally, if you have python3-venv:
 cd backend && python3 -m venv .venv && .venv/bin/pip install -e '.[dev]' && .venv/bin/pytest
 
-# Backend dev server: reuse ../.env (APP_PASSWORD set, COOKIE_SECURE=false for http://localhost)
+# Backend dev server: reuse ../.env (APP_PASSWORD set)
 cd backend && mkdir -p ../data && set -a && . ../.env && set +a && export DATA_DIR=../data \
   && .venv/bin/alembic upgrade head && .venv/bin/uvicorn app.main:app --reload
 

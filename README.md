@@ -31,8 +31,7 @@ cp env.example .env
 mkdir data
 ```
 
-Edit `.env`: set `APP_PASSWORD` and `TZ`. If you'll use plain `http://`
-(no TLS), also set `COOKIE_SECURE=false`. Then:
+Edit `.env`: set `APP_PASSWORD` and `TZ`. Then:
 
 ```bash
 docker compose up -d
@@ -52,7 +51,7 @@ All settings live in `.env` (see `env.example` for comments). `.env` is gitignor
 | `SECRET_KEY` | auto | Signs session cookies. Leave empty to auto-generate into `./data/secret_key` |
 | `TZ` | `UTC` | IANA timezone; decides what "today" is |
 | `PORT` | `8000` | Host port |
-| `COOKIE_SECURE` | `true` | Cookie only sent over HTTPS. Set `false` for plain-HTTP LAN use |
+| `COOKIE_SECURE` | `auto` | HTTPS-only session cookie. `auto` = when the request is HTTPS; `true` forces it (login then fails over plain HTTP); `false` never |
 | `FORWARDED_ALLOW_IPS` | `127.0.0.1` | Proxy IPs trusted for `X-Forwarded-For` (login rate limit) |
 | `LOG_ACCESS` | `false` | Log request paths (never bodies) |
 | `PUID` / `PGID` | `1000` | uid/gid the container runs as; must own `./data` |
@@ -110,16 +109,16 @@ journal.example.com {
   proxy on the host that's usually the Docker bridge gateway, e.g. `172.17.0.1`;
   or `*` if nothing else can reach the port), so the login rate limit sees real
   client IPs.
-- Keep `COOKIE_SECURE=true`.
+- With `COOKIE_SECURE=auto` the cookie becomes HTTPS-only once the proxy is trusted; set `true` to enforce it.
 
 ## LAN-only / Tailscale
 
 This holds personal data — it doesn't need to be on the public internet.
 
 - **Tailscale**: bind the port to your tailnet IP (`"100.x.y.z:8000:8000"`), or
-  use `tailscale serve --bg 8000` to get HTTPS on your `*.ts.net` name (keep
-  `COOKIE_SECURE=true` then).
-- **LAN over plain HTTP**: set `COOKIE_SECURE=false`. Anyone on the network can
+  use `tailscale serve --bg 8000` to get HTTPS on your `*.ts.net` name (`auto` handles
+  the cookie either way).
+- **LAN over plain HTTP**: works with the default `COOKIE_SECURE=auto`. Anyone on the network can
   see traffic, so prefer Tailscale or a proxy with TLS.
 - Encryption at rest is left to the volume (e.g. LUKS / encrypted dataset).
 

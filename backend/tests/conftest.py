@@ -59,7 +59,7 @@ def settings(db_url, tmp_path, password_hash, monkeypatch) -> Settings:
     monkeypatch.setenv("APP_USERNAME", "me")
     monkeypatch.setenv("APP_PASSWORD_HASH", password_hash)
     monkeypatch.setenv("SECRET_KEY", "x" * 40)
-    monkeypatch.setenv("COOKIE_SECURE", "false")
+    monkeypatch.setenv("COOKIE_SECURE", "auto")
     monkeypatch.setenv("STATIC_DIR", str(tmp_path / "no-static"))
     monkeypatch.setenv("TZ", "Europe/Berlin")
     get_settings.cache_clear()

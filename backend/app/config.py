@@ -24,11 +24,21 @@ class Settings(BaseSettings):
     database_url: str | None = None
     static_dir: Path = Path(__file__).resolve().parent.parent / "static"
 
-    cookie_secure: bool = True
+    # "auto": Secure flag only when the request arrived over HTTPS (directly or
+    # via a trusted proxy's X-Forwarded-Proto). "true" / "false" force it.
+    cookie_secure: str = "auto"
     session_days: int = 30
 
     login_max_failures: int = 5
     login_window_seconds: int = 15 * 60
+
+    def secure_cookie_for(self, scheme: str) -> bool:
+        v = self.cookie_secure.strip().lower()
+        if v in ("true", "1", "yes", "on"):
+            return True
+        if v in ("false", "0", "no", "off"):
+            return False
+        return scheme == "https"
 
     @property
     def zone(self) -> ZoneInfo:

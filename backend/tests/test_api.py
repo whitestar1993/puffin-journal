@@ -120,3 +120,26 @@ def test_today_uses_configured_timezone():
     assert str(today(ZoneInfo("Europe/Berlin"), now)) == "2026-11-18"
     assert str(today(ZoneInfo("America/New_York"), now)) == "2026-11-17"
 
+
+
+def _login_cookie(settings, base_url, cookie_secure):
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    s = settings.model_copy(update={"cookie_secure": cookie_secure})
+    with TestClient(create_app(s), base_url=base_url, headers={"X-Puffin": "1"}) as c:
+        r = c.post("/api/auth/login", json={"username": "me", "password": PASSWORD})
+        assert r.status_code == 200
+        return r.headers["set-cookie"].lower()
+
+
+def test_cookie_secure_auto_follows_scheme(settings):
+    assert "secure" not in _login_cookie(settings, "http://testserver", "auto")
+    assert "secure" in _login_cookie(settings, "https://testserver", "auto")
+
+
+def test_cookie_secure_forced(settings, caplog):
+    assert "secure" in _login_cookie(settings, "http://testserver", "true")
+    assert "plain HTTP" in caplog.text  # warns that the browser will drop it
+    assert "secure" not in _login_cookie(settings, "https://testserver", "false")

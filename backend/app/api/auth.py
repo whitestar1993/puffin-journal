@@ -1,4 +1,5 @@
 import hmac
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
@@ -15,6 +16,8 @@ from app.db import get_db
 from app.models import User
 from app.schemas import LoginIn, MeOut
 from app.storage import users as users_store
+
+log = logging.getLogger("puffin")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -44,12 +47,19 @@ def login(
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong username or password")
     limiter.reset(ip)
     user = users_store.get_or_create(db, settings.app_username)
+    secure = settings.secure_cookie_for(request.url.scheme)
+    if secure and request.url.scheme != "https":
+        log.warning(
+            "COOKIE_SECURE=%s but this login came over plain HTTP: the browser will drop "
+            "the session cookie. Use HTTPS, or set COOKIE_SECURE=auto.",
+            settings.cookie_secure,
+        )
     response.set_cookie(
         COOKIE_NAME,
         make_session_token(settings, user.id),
         max_age=settings.session_days * 86400,
         httponly=True,
-        secure=settings.cookie_secure,
+        secure=secure,
         samesite="lax",
         path="/",
     )
@@ -57,9 +67,10 @@ def login(
 
 
 @router.post("/logout", status_code=204)
-def logout(settings: Settings = Depends(get_settings)):
+def logout(request: Request, settings: Settings = Depends(get_settings)):
     response = Response(status_code=204)
-    response.delete_cookie(COOKIE_NAME, path="/", secure=settings.cookie_secure, httponly=True)
+    secure = settings.secure_cookie_for(request.url.scheme)
+    response.delete_cookie(COOKIE_NAME, path="/", secure=secure, httponly=True)
     return response
 
 
